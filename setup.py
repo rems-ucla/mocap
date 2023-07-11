@@ -39,6 +39,7 @@ setup(
     cmdclass=cmdclass,
     description=get_metadata('description'),
     url=get_metadata("url"),
+    project_urls={'GitHub': 'https://github.com/rems-ucla/mocap'},
     author=get_metadata('author'),
     license='LGPLv3',
     packages=find_packages(include=['mocap', 'mocap.*']),
