@@ -1,7 +1,7 @@
 from rems.device.ObserveStateBase import ObserveStateBaseBasic
 from .ArucoHelper import ArucoHelper
 from defdict import DefDict
-from timestamp import time_str
+from .timestamp import time_str
 
 ARUCO_STATE = dict(x=float, y=float, z=float, th_z=float, th_y=float, th_x=float)
 VEL_2D = dict(d_x=float, d_y=float, d_th_y=float)
@@ -9,7 +9,7 @@ VEL_2D = dict(d_x=float, d_y=float, d_th_y=float)
 class ArucoDevice(ObserveStateBaseBasic):
     device_name = 'ArucoDevice'
 
-    def __init__(self, track_id, camera_id=0, video_name=f'video/aruco_{time_str()}.avi', dt=0.1):
+    def __init__(self, track_id, camera_id=0, video_name=f'video/aruco_{time_str()}.avi', dt=0.1, env=None):
         super().__init__()
         if not isinstance(track_id, list):
             track_id = [track_id]
@@ -21,6 +21,7 @@ class ArucoDevice(ObserveStateBaseBasic):
         self.dt = dt
         self.aruco_state = DefDict(ARUCO_STATE)
         self.all_data = DefDict({str(k): DefDict(ARUCO_STATE) for k in self.track_id})
+        self.env = env
 
     def observe_state(self, *args, **kwargs):
         self._track_makers()
@@ -42,7 +43,7 @@ class ArucoDevice(ObserveStateBaseBasic):
 
     def init(self):
         self.state = DefDict(ARUCO_STATE)
-        self.aruco = ArucoHelper(fps=round(1 / self.dt), camera_id=self.camera_id, video_name=self.video_name)
+        self.aruco = ArucoHelper(fps=round(1 / self.dt), camera_id=self.camera_id, video_name=self.video_name, env=self.env)
 
     def open(self):
         self.aruco.init_camera()

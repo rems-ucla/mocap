@@ -30,7 +30,7 @@ class ARUCO:
     FRAME_INIT = [0,0,0, 0,0,0] #frame init, [x,y,z, i,j,k,w]
 
 
-    CAMERA_RES = [int(480),int(640)]
+    CAMERA_RES = [int(1080), int(1920)]
 
     EULER = 'zyx'
 
@@ -44,7 +44,7 @@ class ARUCO:
 
 
 class ArucoHelper:
-    def __init__(self, camera_id=0, calib_file_dir=ARUCO.CALIBRATION_PATH, tag_size=ARUCO.TAG_SIZE,fps=ARUCO.FPS, video_name=ARUCO.VIDEO_NAME):
+    def __init__(self, camera_id=0, calib_file_dir=ARUCO.CALIBRATION_PATH, tag_size=ARUCO.TAG_SIZE,fps=ARUCO.FPS, video_name=ARUCO.VIDEO_NAME, env=None):
         self.calib_file_dir = calib_file_dir.resolve()
         self.id_tack =[]
         self.pipe = None
@@ -56,7 +56,11 @@ class ArucoHelper:
         self.tag_size = tag_size
         self.camera_id = camera_id
         self.frames = {}   # tracking ids and respective frames
-        self.arena_corner = np.array([[0.0, 0.0], [ENV.WIDTH, 0.0], [0.0, ENV.LENGTH], [ENV.WIDTH, ENV.LENGTH]], np.float32) * 1000
+        if env is None:
+            env = ENV()
+        self.arena_corner = np.array([[0.0, 0.0], [env.WIDTH, 0.0], [0.0, env.LENGTH], [env.WIDTH, env.LENGTH]], np.float32) * 1000
+        self.arena_corner_actual =  np.array([[0.0, 0.0], [env.WIDTH, 0.0], [0.0, env.LENGTH], [env.WIDTH, env.LENGTH]], np.float32) * 1000
+        self.arena_origin_offset =[-env.WIDTH/2,-env.LENGTH/2,0,0,0,0] #World origin to World tag
         #calibration setting
         self.criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         self.t = 0.0
@@ -150,7 +154,7 @@ class ArucoHelper:
 
     def _corner_2_frame(self, corners, ids):
 
-        h_trans, status = cv2.findHomography(self.arena_corner, ARUCO.ARENA_CORNER, cv2.RANSAC) #perspective matrix
+        h_trans, status = cv2.findHomography(self.arena_corner, self.arena_corner_actual, cv2.RANSAC) #perspective matrix
         # this things uses mm regardless of the other part of units
 
         if np.all(ids is not None):  # If there are markers found by detector
@@ -176,7 +180,7 @@ class ArucoHelper:
             self.track()
             for id in track_ids:
                 if id in self.frames.keys() and ARUCO.TAG_ARENA_ID[0] in self.frames.keys():
-                    ret_frames[str(id)] = (self.frames[id]) + ARUCO.ARENA_ORIGIN_OFFSET
+                    ret_frames[str(id)] = (self.frames[id]) + self.arena_origin_offset
                 else:
                     self.frames[id] = (ARUCO.FRAME_INIT)
         return ret_frames
@@ -252,8 +256,8 @@ class ArucoHelper:
         # FILE_STORAGE_READ
         cv_file = cv2.FileStorage(str(self.calib_file_dir.absolute() / ARUCO.CALIBRATION), cv2.FILE_STORAGE_READ)
 
-        # note we also have to specify the type to retrieve other wise we only get a
-        # FileNode object back instead of a matrix
+        # note we also have to specify the type to retrieve otherwise we only get a
+        # FileNode object back instead of a matrixR
         camera_matrix = cv_file.getNode("Camera").mat()
         dist_matrix = cv_file.getNode("Distortion").mat()
 
