@@ -190,10 +190,17 @@ class ArucoHelper:
         euler_rvec = R.from_rotvec(rvec).as_euler(ARUCO.EULER)
         return euler_rvec
 
-    def run(self, track_ids):
+    def run(self, track_ids, duration=-1):
         """run function is to test run the aruco tag detection standalone
         No need to use this in the simulation implementation"""
-        while True:
+        def is_time(duration, start_time):
+            if duration < 0: # indefinite run
+                return True
+            else:
+                return (time.perf_counter() - start_time) <= duration
+
+        start_time =time.perf_counter()
+        while is_time(duration, start_time):
             fs = self.get_frames(track_ids)
             print(fs)
             # Wait 3 milisecoonds for an interaction. Check the key and do the corresponding job.
@@ -262,6 +269,10 @@ class ArucoHelper:
         dist_matrix = cv_file.getNode("Distortion").mat()
 
         cv_file.release()
+        if camera_matrix is None:
+            camera_matrix = np.eye(3)
+        if dist_matrix is None:
+            dist_matrix = np.zeros((1, 5))
         self.camera_matrix = camera_matrix
         self.distortion_matrix = dist_matrix
 

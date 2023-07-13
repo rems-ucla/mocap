@@ -2,6 +2,7 @@ from .ArucoDevice import ArucoDevice, ShareAruco
 from .ArucoBot import ArucoBot
 from .ArucoHelper import ArucoHelper, ENV, ARUCO
 from .timestamp import time_str
+from .run_test import run_test
 
 
 
